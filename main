@@ -1,0 +1,151 @@
+% Button pushed function: Button_4
+        function Button_4Pushed(app, event)
+            
+            M=dlmread('signal_05_1.txt');X1=M(:,1);X2=M(:,2);
+            tmax=1.25;
+            Fd=500;
+            T=1/Fd;
+            t=0:T:tmax-T;
+            N=Fd*tmax;
+            
+            %построение входных сигналов
+            plot(app.signal_1,t,X1)
+            plot(app.signal_2,t,X2)
+            app.signal_1.XLim=[0 tmax];
+            app.signal_2.XLim=[0 tmax];
+            app.signal_1.YLim=[-2 4];
+            app.signal_2.YLim=[-2 4];
+            
+            %расчет АКФ для входных сигналов
+            tcf=-tmax+T:T:tmax-T;
+            acf1=xcorr(X1,'coeff');
+            acf2=xcorr(X2,'coeff');
+            plot(app.Acorr_1,tcf,acf1)
+            plot(app.Acorr_2,tcf,acf2)
+            app.Acorr_1.YLim=[-1 +1];
+            app.Acorr_2.YLim=[-1 +1];
+             app.Acorr_1.XLim=[-tmax/2 +tmax/2];
+            app.Acorr_2.XLim=[-tmax/2 +tmax/2];
+            
+            %расчет ВКФ для входных сигналов
+            ccf12=xcorr(X1,X2,'coeff');
+            plot(app.Ccorr12,tcf,ccf12)
+            app.Ccorr12.YLim=[-1 +1];
+             app.Ccorr12.XLim=[-tmax/2 +tmax/2];
+            
+            %расчет СПМ для входных сигналов
+            nfft=1024;
+            df=Fd/N;
+            for i=1:(N/2)
+                f(i)=df*(i-1);
+            end
+            if app.Button.Value==true
+             [pxx1,f] = periodogram(X1,rectwin(length(X1)),nfft,Fd);
+             [pxx2,f] = periodogram(X2,rectwin(length(X2)),nfft,Fd);
+          elseif app.Button_2.Value==true
+             [pxx1,f] = periodogram(X1,bartlett(length(X1)),nfft,Fd);
+             [pxx2,f] = periodogram(X2,bartlett(length(X2)),nfft,Fd);
+          elseif app.Button_3.Value==true
+             [pxx1,f] = periodogram(X1,hamming(length(X1)),nfft,Fd);
+             [pxx2,f] = periodogram(X2,hamming(length(X2)),nfft,Fd);
+            end
+            plot(app.SPD_1,f,pxx1)
+            plot(app.SPD_2,f,pxx2)
+                if app.Switch.Value=='Логарифмический'
+                    app.SPD_1.YScale='log';
+                    app.SPD_2.YScale='log';
+                    app.SPD_1.YLabel.String = 'СПМ,дБ';
+                    app.SPD_2.YLabel.String = 'СПМ,дБ';
+                elseif app.Switch.Value=='Линейный'
+                    app.SPD_1.Yscale='lin';
+                    app.SPD_2.Yscale='lin';
+                end
+            
+            
+        end
+% Button pushed function: Button_5
+        function Button_5Pushed(app, event)
+            
+            M=dlmread('signal_05_1.txt');X1=M(:,1);X2=M(:,2);
+            load('coef.mat');
+            tmax=1.25;
+            Fd=500;
+            T=1/Fd;
+            t=0:T:tmax-T;
+            N=Fd*tmax;
+            for i=1:11
+                a(i)=Den(i);
+                b(i)=Num(i);
+            end
+            
+            %фильтрация входных сигналов
+            Y1=filter(b,a,X1);
+            Y2=filter(b,a,X2);
+            plot(app.filter_1,t,Y1)
+            plot(app.filter_2,t,Y2)
+            app.filter_1.XLim=[0 tmax];
+            app.filter_2.XLim=[0 tmax];
+            app.filter_1.YLim=[-2 4];
+            app.filter_2.YLim=[-2 4];
+            
+            %расчет АКФ для выходных сигналов
+            tcf=-tmax+T:T:tmax-T;
+            acf_filt1=xcorr(Y1,'coeff');
+            acf_filt2=xcorr(Y2,'coeff');
+            plot(app.Acorr_filter_1,tcf,acf_filt1)
+            plot(app.Acorr_filter_2,tcf,acf_filt2)
+            app.Acorr_filter_1.YLim=[-1 +1];
+            app.Acorr_filter_2.YLim=[-1 +1];
+             app.Acorr_filter_1.XLim=[-tmax/2 +tmax/2];
+            app.Acorr_filter_2.XLim=[-tmax/2 +tmax/2];
+            
+            %расчет ВКФ для выходных сигналов
+            ccf_filt12=xcorr(Y1,Y2,'coeff');
+            plot(app.Ccorr_filter12,tcf,ccf_filt12)
+            app.Ccorr_filter12.YLim=[-1 +1];
+            app.Ccorr_filter12.XLim=[-tmax/2 +tmax/2];
+            
+            %расчет СПМ для выходных сигналов
+            nfft=1024;
+             df=Fd/N;
+            for i=1:(N/2)-1
+                f(i)=df*(i-1);
+            end
+          if app.Button.Value==true
+             [pxx12,f] = periodogram(Y1,rectwin(length(Y1)),nfft,Fd);
+             [pxx22,f] = periodogram(Y2,rectwin(length(Y2)),nfft,Fd);
+             [pxx11,f] = periodogram(X1,rectwin(length(X1)),nfft,Fd);
+             [pxx21,f] = periodogram(X2,rectwin(length(X2)),nfft,Fd);
+          elseif app.Button_2.Value==true
+             [pxx12,f] = periodogram(Y1,bartlett(length(Y1)),nfft,Fd);
+             [pxx22,f] = periodogram(Y2,bartlett(length(Y2)),nfft,Fd);
+             [pxx11,f] = periodogram(X1,bartlett(length(X1)),nfft,Fd);
+             [pxx21,f] = periodogram(X2,bartlett(length(X2)),nfft,Fd);
+          elseif app.Button_3.Value==true
+             [pxx12,f] = periodogram(Y1,hamming(length(Y1)),nfft,Fd);
+             [pxx22,f] = periodogram(Y2,hamming(length(Y2)),nfft,Fd);
+             [pxx11,f] = periodogram(X1,hamming(length(X1)),nfft,Fd);
+             [pxx21,f] = periodogram(X2,hamming(length(X2)),nfft,Fd);
+          end
+                    plot(app.SPD_filter_1,f,pxx12)
+                    plot(app.SPD_filter_2,f,pxx22)
+                    plot(app.SPD_1,f,pxx11)
+                    plot(app.SPD_2,f,pxx21)
+            if app.Switch.Value=='Логарифмический'
+                   app.SPD_filter_1.YScale='log';
+                    app.SPD_filter_2.YScale='log';
+                     app.SPD_1.YScale='log';
+                    app.SPD_2.YScale='log';
+                     app.SPD_1.YLabel.String = 'СПМ,дБ';
+                    app.SPD_2.YLabel.String = 'СПМ,дБ';
+                     app.SPD_filter_1.YLabel.String = 'СПМ,дБ';
+                    app.SPD_filter_2.YLabel.String = 'СПМ,дБ';
+                elseif app.Switch.Value=='Линейный'
+                    app.SPD_filter_1.YScale='lin';
+                    app.SPD_filter_2.YScale='lin';
+                    app.SPD_1.Yscale='lin';
+                    app.SPD_2.Yscale='lin';
+                  
+                end
+        end
+    end
